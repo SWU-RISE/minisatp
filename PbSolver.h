@@ -121,6 +121,7 @@ public:
                     if (!use_preprocessing) 
                         sat_solver.eliminate(true); 
                 }
+  ~PbSolver();
 
     // Helpers (semi-internal):
     //

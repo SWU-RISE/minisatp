@@ -221,6 +221,10 @@ namespace ENV {
         CompMap(T null) : DeckMap<T>(null), offset(ENV::nodes.size()) { }
         T    at (FML f)          { return DeckMap<T>::at((sgn ? sindex(f) : ::index(f)) - offset);  }
         void set(FML f, T value) { DeckMap<T>::set((sgn ? sindex(f) : ::index(f)) - offset, value); }
+        void clear(){
+             DeckMap<T>::clear();
+        }
+        
     };
 
     template <class T, bool sgn = false>
@@ -346,6 +350,11 @@ bool eval(Formula f, AMap<char>& values);
 
 namespace FEnv {
     extern vec<int> stack;
+macro void init(){
+  nodes.clear(); uniqueness_table.clear(); stack.clear();
+
+  
+}
     macro void clear() { nodes.clear(); uniqueness_table.clear(); }
     macro void push()  { stack.push(nodes.size()); }
     macro void pop()   {

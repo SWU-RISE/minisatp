@@ -26,6 +26,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 //=================================================================================================
 
 
+void clearClausify(void);
+
 int  estimatedAdderCost(const Linear& c);
 void oddEvenSort(vec<Formula>& fs);
 void rippleAdder(const vec<Formula>& xs, const vec<Formula>& ys, vec<Formula>& out);
@@ -33,6 +35,8 @@ void addPb(const vec<Formula>& ps, const vec<Int>& Cs_, vec<Formula>& out, int b
 
 void clausify(SimpSolver& s, const vec<Formula>& fs, vec<Lit>& out);
 void clausify(SimpSolver& s, const vec<Formula>& fs);
+
+  
 
 
 //=================================================================================================

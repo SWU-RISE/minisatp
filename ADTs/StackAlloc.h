@@ -26,6 +26,8 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 template<class T>
 struct Allocator {
     virtual T* alloc(int nwords) = 0;
+    virtual ~Allocator(){
+    }
 };
 
 
@@ -53,6 +55,7 @@ public:
 
     void freeAll(void);
     void clear  (void) { freeAll(); init(); }
+  
 };
 
 

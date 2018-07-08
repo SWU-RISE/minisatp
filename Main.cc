@@ -28,6 +28,7 @@ Read a DIMACS file and apply the SAT-solver to it.
 #include <signal.h>
 #include "PbSolver.h"
 #include "PbParser.h"
+#include "Hardware.h"
 
 
 //=================================================================================================
@@ -218,7 +219,7 @@ void reportf(const char* format, ...)
 // Helpers:
 
 
-PbSolver*   pb_solver = NULL;   // Made global so that the SIGTERM handler can output best solution found.
+// PbSolver*   pb_solver = NULL;   // Made global so that the SIGTERM handler can output best solution found.
 
 
 void outputResult(const PbSolver& S, bool optimum = true)
@@ -253,7 +254,7 @@ static void SIGINT_handler(int /*signum*/) {
 static void SIGTERM_handler(int /*signum*/) {
     reportf("\n");
     reportf("*** TERMINATED ***\n");
-    outputResult(*pb_solver, false);
+    // outputResult(*pb_solver, false);
     //SatELite::deleteTmpFiles();
     _exit(0);
 }
@@ -274,41 +275,50 @@ PbSolver::solve_Command convert(Command cmd) {
 
 
 int main(int argc, char** argv)
+    
 {
+  for(int i=0; i< 10; i++){
+
+    clearClausify();
+    PbSolver   pb_solver;
     /*DEBUG*/if (argc > 1 && (strcmp(argv[1], "-debug") == 0 || strcmp(argv[1], "--debug") == 0)){ void test(); test(); exit(0); }
 
     parseOptions(argc, argv);
-    pb_solver = new PbSolver(opt_preprocess);
+    // pb_solver = new PbSolver(opt_preprocess);
     signal(SIGINT , SIGINT_handler);
     signal(SIGTERM, SIGTERM_handler);
 
     // Set command from 'PBSATISFIABILITYONLY':
     char* value = getenv("PBSATISFIABILITYONLY");
-    if (value != NULL && atoi(value) == 1)
-        reportf("Setting switch '-first' from environment variable 'PBSATISFIABILITYONLY'.\n"),
-        opt_command = cmd_FirstSolution;
+    if (value != NULL && atoi(value) == 1){
+      reportf("Setting switch '-first' from environment variable 'PBSATISFIABILITYONLY'.\n"),
+          opt_command = cmd_FirstSolution;
+    }
 
     if (opt_verbosity >= 1) reportf("Parsing PB file...\n");
-    parse_PB_file(opt_input, *pb_solver, opt_old_format);
-    pb_solver->solve(convert(opt_command));
+    parse_PB_file(opt_input, pb_solver, opt_old_format);
+    pb_solver.solve(convert(opt_command));
 
-    if (pb_solver->goal == NULL && pb_solver->best_goalvalue != Int_MAX)
-        opt_command = cmd_FirstSolution;    // (otherwise output will be wrong)
-    if (!pb_solver->okay())
-        opt_command = cmd_Minimize;         // (HACK: Get "UNSATISFIABLE" as output)
+    if (pb_solver.goal == NULL && pb_solver.best_goalvalue != Int_MAX)
+      opt_command = cmd_FirstSolution;    // (otherwise output will be wrong)
+    if (!pb_solver.okay())
+      opt_command = cmd_Minimize;         // (HACK: Get "UNSATISFIABLE" as output)
 
     // <<== write result to file 'opt_result'
 
     if (opt_command == cmd_Minimize)
-        outputResult(*pb_solver);
+      outputResult(pb_solver);
     else if (opt_command == cmd_FirstSolution)
-        outputResult(*pb_solver, false);
+      outputResult(pb_solver, false);
 
     if (opt_verbosity >= 1) {
-        reportf("_______________________________________________________________________________\n\n");
-        pb_solver->printStats();
-        reportf("_______________________________________________________________________________\n");
+      reportf("_______________________________________________________________________________\n\n");
+      pb_solver.printStats();
+      reportf("_______________________________________________________________________________\n");
     }
+  }
+    
+    // delete pb_solver;
 
     exit(0); // (faster than "return", which will invoke the destructor for 'PbSolver')
 }

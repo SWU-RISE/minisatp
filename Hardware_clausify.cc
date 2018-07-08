@@ -46,12 +46,21 @@ struct Clausifier
 
     Lit   basicClausify   (Formula f);
     Lit   polarityClausify(Formula f);
+  static void clear(){
+    occ.clear();
+    vmap.clear();
+    vmapp.clear();
+  }
 };
 
 CMap<int>      Clausifier::occ  (0);
 CMap<Var>      Clausifier::vmap (var_Undef);
 CMap<Lit,true> Clausifier::vmapp(lit_Undef);
 
+void clearClausify(void){
+  FEnv::init();
+  Clausifier::clear();
+}
 void Clausifier::usage(Formula f)
 {
     if (Atom_p(f))

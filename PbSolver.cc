@@ -426,6 +426,7 @@ bool PbSolver::rewriteAlmostClauses()
 
         if (c.hi != Int_MAX) continue;
 
+        
         int n = c.size;
         for (; n > 0 && c(n-1) == c.lo; n--);
 
@@ -598,6 +599,13 @@ void PbSolver::solve(solve_Command cmd)
         }
     }
 }
+
+PbSolver::~PbSolver(){
+  // mem.freeAll();
+  // xfree(goal);
+}
+  
+
 
 void PbSolver::printStats()
 {

@@ -130,7 +130,9 @@ template<class T> macro T* xrealloc(T* ptr, size_t size) {
     return tmp; }
 
 template<class T> macro void xfree(T *ptr) {
-    if (ptr != NULL) free((void*)ptr); }
+    if (ptr != NULL) free((void*)ptr);
+    ptr=NULL;
+}
 
 macro char* Xstrdup(cchar* src);
 macro char* Xstrdup(cchar* src) {
