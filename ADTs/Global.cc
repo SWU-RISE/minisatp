@@ -35,7 +35,7 @@ char* vnsprintf(const char* format, va_list args)
     args_copy = args;
   #endif
     chars_written = vfprintf(dummy, format, args);
-    ret = xmalloc<char>(chars_written + 1);
+    ret =new char[chars_written + 1];//  xmalloc<char>(chars_written + 1);
     ret[chars_written] = 255;
     args = args_copy;
     vsprintf(ret, format, args);
@@ -59,14 +59,14 @@ macro bool hasChar(cchar* text, int chr) {
     while (*text != 0) if (*text++ == chr) return true;
     return false; }
 
-void splitString(cchar* text, cchar* seps, vec<char*>& out)
+void splitString(cchar* text, cchar* seps, vector<char*>& out)
 {
     while (hasChar(seps, *text)) text++;
     if (*text == 0) return;
     cchar* start = text;
     for(;;){
         if (*text == 0 || hasChar(seps, *text)){
-            out.push(xstrndup(start, text-start));
+            out.push_back(xstrndup(start, text-start));
             while (hasChar(seps, *text)) text++;
             if (*text == 0) return;
             start = text;

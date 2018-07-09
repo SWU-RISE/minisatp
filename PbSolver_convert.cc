@@ -21,7 +21,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 #include "Hardware.h"
 
 //-------------------------------------------------------------------------------------------------
-void    linearAddition (const Linear& c, vec<Formula>& out);        // From: PbSolver_convertAdd.C
+void    linearAddition (const Linear& c, vector<Formula>& out);        // From: PbSolver_convertAdd.C
 Formula buildConstraint(const Linear& c, int max_cost = INT_MAX);   // From: PbSolver_convertSort.C
 Formula convertToBdd   (const Linear& c, int max_cost = INT_MAX);   // From: PbSolver_convertBdd.C
 //-------------------------------------------------------------------------------------------------
@@ -29,7 +29,7 @@ Formula convertToBdd   (const Linear& c, int max_cost = INT_MAX);   // From: PbS
 
 bool PbSolver::convertPbs(bool first_call)
 {
-    vec<Formula>    converted_constrs;
+    vector<Formula>    converted_constrs;
 
     if (first_call){
         findIntervals();
@@ -38,7 +38,7 @@ bool PbSolver::convertPbs(bool first_call)
             return false; }
     }
 
-    for (int i = 0; i < constrs.size(); i++){
+    for (size_t i = 0; i < constrs.size(); i++){
         if (constrs[i] == NULL) continue;
         Linear& c   = *constrs[i]; assert(c.lo != Int_MIN || c.hi != Int_MAX);
 
@@ -46,11 +46,11 @@ bool PbSolver::convertPbs(bool first_call)
             /**/reportf("---[%4d]---> ", constrs.size() - 1 - i);
 
         if (opt_convert == ct_Sorters)
-            converted_constrs.push(buildConstraint(c));
+            converted_constrs.push_back(buildConstraint(c));
         else if (opt_convert == ct_Adders)
             linearAddition(c, converted_constrs);
         else if (opt_convert == ct_BDDs)
-            converted_constrs.push(convertToBdd(c));
+            converted_constrs.push_back(convertToBdd(c));
         else if (opt_convert == ct_Mixed){
             int adder_cost = estimatedAdderCost(c);
             //**/printf("estimatedAdderCost: %d\n", estimatedAdderCost(c));
@@ -60,7 +60,7 @@ bool PbSolver::convertPbs(bool first_call)
             if (result == _undef_)
                 linearAddition(c, converted_constrs);
             else
-                converted_constrs.push(result);
+                converted_constrs.push_back(result);
         }else
             assert(false);
 
@@ -68,12 +68,13 @@ bool PbSolver::convertPbs(bool first_call)
     }
 
     // NOTE: probably still leaks memory (if there are constraints that are NULL'ed elsewhere)
-    for (int i = 0; i < constrs.size(); i++)
-      if (constrs[i] != NULL)
-        constrs[i]->~Linear();
+    for (size_t i = 0; i < constrs.size(); i++){
+      if (constrs[i] != NULL){
+        delete constrs[i];
+      }
+    }
 
     constrs.clear();
-    mem.clear();
 
     clausify(sat_solver, converted_constrs);
 

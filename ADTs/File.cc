@@ -27,7 +27,7 @@ void File::open(int file_descr, FileMode m, bool own)
     mode   = m;
     own_fd = own;
     pos    = 0;
-    buf    = xmalloc<uchar>(File_BufSize);
+    buf    =new uchar[File_BufSize];//  xmalloc<uchar>(File_BufSize);
     if (mode == READ) size = read(fd, buf, File_BufSize);
     else              size = -1;
 }
@@ -57,7 +57,7 @@ void File::open(cchar* name, cchar* mode_)
         own_fd = true;
         pos    = 0;
         if (has_a) lseek64(fd, 0, SEEK_END);
-        buf    = xmalloc<uchar>(File_BufSize);
+        buf    = new uchar[File_BufSize];
         if (mode == READ) size = read(fd, buf, File_BufSize);
         else              size = -1;
     }
@@ -69,7 +69,8 @@ void File::close(void)
     if (fd == -1) return;
     if (mode == WRITE)
         flush();
-    xfree(buf); buf = NULL;
+    delete[] buf;
+    buf = NULL;
     if (own_fd)
         ::close(fd);
     fd = -1;

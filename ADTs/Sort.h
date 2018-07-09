@@ -37,6 +37,8 @@ applied either on
 
 #ifndef Sort_h
 #define Sort_h
+#include<vector>
+using std::vector;
 
 //#include <cstdlib>
 
@@ -138,24 +140,24 @@ static inline void sortUnique(T* array, int& size) {
 // For 'vec's:
 
 template <class T, class LessThan>
-void sort(vec<T>& v, LessThan lt) {
-  sort((T*)v, v.size(), lt);
+void sort(vector<T>& v, LessThan lt) {
+  sort(&(v[0]), v.size(), lt);
 }
 template <class T>
-void sort(vec<T>& v) {
+void sort(vector<T>& v) {
   sort(v, LessThan_default<T>());
 }
 
 template <class T, class LessThan>
-void sortUnique(vec<T>& v, LessThan lt) {
+void sortUnique(vector<T>& v, LessThan lt) {
   int size = v.size();
   T* data = v.release();
   sortUnique(data, size, lt);
-  v.~vec<T>();
-  new (&v) vec<T>(data, size);
+  v.~vector<T>();
+  new (&v) vector<T>(data, size);
 }
 template <class T>
-void sortUnique(vec<T>& v) {
+void sortUnique(vector<T>& v) {
   sortUnique(v, LessThan_default<T>());
 }
 

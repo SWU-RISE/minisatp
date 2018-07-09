@@ -35,7 +35,7 @@ SOFTWARE.
 // TODO: Adapt constructors of 'BitMap' and 'DeckMap' to those of VecMap.
 
 class BitMap {
-  vec<unsigned> v;
+  vector<unsigned> v;
   bool bool_null;
 
   unsigned word(int index) const { return (unsigned)index / (sizeof(int) * 8); }
@@ -62,7 +62,7 @@ class BitMap {
 
   void set(int index, bool value) {
     if (word(index) >= (unsigned)v.size())
-      assert(index >= 0), v.growTo(word(index) + 1, -(int)bool_null);
+      assert(index >= 0), v.resize(word(index) + 1, -(int)bool_null);
     if (value == false)
       v[word(index)] &= ~mask(index);
     else
@@ -74,7 +74,7 @@ class BitMap {
 
 template <class T>
 class VecMap {
-  vec<T> v;
+  vector<T> v;
   T T_null;
 
  public:
@@ -94,7 +94,7 @@ class VecMap {
 
   void set(int index, T value) {
     if ((unsigned)index >= (unsigned)v.size())
-      assert(index >= 0), v.growTo(index + 1, T_null);
+      assert(index >= 0), v.resize(index + 1, T_null);
     v[index] = value;
   }
 

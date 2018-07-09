@@ -44,7 +44,8 @@ Contains types, macros, and inline functions generally useful in a C++ program.
 #include <cstdlib>
 #include <cstring>
 #include <new>
-
+#include<vector>
+using std::vector;
 //=================================================================================================
 // Basic Types & Minor Things:
 
@@ -144,32 +145,12 @@ char* nsprintf(cchar* format, ...) ___format(printf, 1, 2) ___malloc;
 char* vnsprintf(const char* format, va_list args) ___malloc;
 
 //=================================================================================================
-// 'malloc()'-style memory allocation -- never returns NULL; aborts instead:
 
-template <class T>
-macro T* xmalloc(size_t size) {
-  T* tmp = (T*)malloc(size * sizeof(T));
-  assert(size == 0 || tmp != NULL);
-  return tmp;
-}
-
-template <class T>
-macro T* xrealloc(T* ptr, size_t size) {
-  T* tmp = (T*)realloc((void*)ptr, size * sizeof(T));
-  assert(size == 0 || tmp != NULL);
-  return tmp;
-}
-
-template <class T>
-macro void xfree(T* ptr) {
-  if (ptr != NULL) free((void*)ptr);
-  ptr = NULL;
-}
 
 macro char* Xstrdup(cchar* src);
 macro char* Xstrdup(cchar* src) {
   int size = strlen(src) + 1;
-  char* tmp = xmalloc<char>(size);
+  char* tmp = new char[size]; //xmalloc<char>(size);
   memcpy(tmp, src, size);
   return tmp;
 }
@@ -177,10 +158,11 @@ macro char* Xstrdup(cchar* src) {
 
 macro char* xstrndup(cchar* src, int len) ___malloc;
 macro char* xstrndup(cchar* src, int len) {
-  int size;
+  int size=0;
   for (size = 0; size < len && src[size] != '\0'; size++)
     ;
-  char* tmp = xmalloc<char>(size + 1);
+  
+  char* tmp =new char[size+1];//  xmalloc<char>(size + 1);
   memcpy(tmp, src, size);
   tmp[size] = '\0';
   return tmp;
@@ -255,166 +237,20 @@ inline Pair<Fst, Snd> Pair_new(const Fst& x, const Snd& y) {
 }
 
 //=================================================================================================
-// 'vec' -- automatically resizable arrays (via 'push()' method):
 
-// NOTE! Don't use this vector on datatypes that cannot be re-located in memory
-// (with realloc)
-
-template <class T>
-class vec {
-  T* data;
-  int sz;
-  int cap;
-
-  void init(int size, const T& pad);
-  void grow(int min_cap);
-
- public:
-  // Types:
-  typedef int Key;
-  typedef T Datum;
-
-  // Constructors:
-  vec(void) : data(NULL), sz(0), cap(0) {}
-  vec(int size) : data(NULL), sz(0), cap(0) { growTo(size); }
-  vec(int size, const T& pad) : data(NULL), sz(0), cap(0) { growTo(size, pad); }
-  vec(T* array, int size)
-      : data(array),
-        sz(size),
-        cap(size) {
-  }  // (takes ownership of array -- will be deallocated with 'xfree()')
-  ~vec(void) { clear(true); }
-
-  // Ownership of underlying array:
-  T* release(void) {
-    T* ret = data;
-    data = NULL;
-    sz = 0;
-    cap = 0;
-    return ret;
-  }
-  operator T*(void) { return data; }  // (unsafe but convenient)
-  operator const T*(void)const { return data; }
-
-  // Size operations:
-  int size(void) const { return sz; }
-  void shrink(int nelems) {
-    assert(nelems <= sz);
-    for (int i = 0; i < nelems; i++) sz--, data[sz].~T();
-  }
-  void shrink_(int nelems) {
-    assert(nelems <= sz);
-    sz -= nelems;
-  }
-  void pop(void) { sz--, data[sz].~T(); }
-  void growTo(int size);
-  void growTo(int size, const T& pad);
-  void clear(bool dealloc = false);
-  void clear_(void) { sz = 0; }
-  void capacity(int size) { grow(size); }
-
-  // Stack interface:
-  void push(void) {
-    if (sz == cap) grow(sz + 1);
-    new (&data[sz]) T();
-    sz++;
-  }
-  void push(const T& elem) {
-    if (sz == cap) grow(sz + 1);
-    new (&data[sz]) T(elem);
-    sz++;
-  }
-  // void     push  (const T& elem)     { if (sz == cap) grow(sz+1); data[sz++]
-  // = elem; }
-  void push_(const T& elem) { data[sz++] = elem; }
-  const T& last(void) const { return data[sz - 1]; }
-  T& last(void) { return data[sz - 1]; }
-
-// Vector interface:
-#ifdef DEBUG
-  const T& operator[](int index) const {
-    assert((uint)index < (uint)sz);
-    return data[index];
-  }
-  T& operator[](int index) {
-    assert((uint)index < (uint)sz);
-    return data[index];
-  }
-#else
-  const T& operator[](int index) const { return data[index]; }
-  T& operator[](int index) { return data[index]; }
-#endif
-
-  // Don't allow copying (error prone):
-  vec<T>& operator=(vec<T>& other) {
-    TEMPLATE_FAIL;
-    return *this;
-  }
-  vec(vec<T>& other) { TEMPLATE_FAIL; }
-
-  // Duplicatation (preferred instead):
-  void copyTo(vec<T>& copy) const {
-    copy.clear();
-    copy.growTo(sz);
-    for (int i = 0; i < sz; i++) new (&copy[i]) T(data[i]);
-  }
-  void moveTo(vec<T>& dest) {
-    dest.clear(true);
-    dest.data = data;
-    dest.sz = sz;
-    dest.cap = cap;
-    data = NULL;
-    sz = 0;
-    cap = 0;
-  }
-};
-
-template <class T>
-void vec<T>::grow(int min_cap) {
-  if (min_cap <= cap) return;
-  if (cap == 0)
-    cap = (min_cap >= 2) ? min_cap : 2;
-  else
-    do
-      cap = (cap * 3 + 1) >> 1;
-    while (cap < min_cap);
-  data = xrealloc(data, cap);
-}
-
-template <class T>
-void vec<T>::growTo(int size, const T& pad) {
-  if (sz >= size) return;
-  grow(size);
-  for (int i = sz; i < size; i++) new (&data[i]) T(pad);
-  sz = size;
-}
-
-template <class T>
-void vec<T>::growTo(int size) {
-  if (sz >= size) return;
-  grow(size);
-  for (int i = sz; i < size; i++) new (&data[i]) T();
-  sz = size;
-}
-
-template <class T>
-void vec<T>::clear(bool dealloc) {
-  if (data != NULL) {
-    for (int i = 0; i < sz; i++) data[i].~T();
-    sz = 0;
-    if (dealloc) xfree(data), data = NULL, cap = 0;
-  }
-}
 
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 //- - - - - - - - - -
 // (for convenience)
 
-void splitString(cchar* text, cchar* seps, vec<char*>& out);
+void splitString(cchar* text, cchar* seps, vector<char*>& out);
 
 template <class T>
-macro void xfreeAll(vec<T*>& ptrs) {
-  for (int i = 0; i < ptrs.size(); i++) xfree(ptrs[i]);
+macro void xfreeAll(vector<T*>& ptrs) {
+  for (int i = 0; i < ptrs.size(); i++){
+    delete ptrs[i];
+    // xfree<T>(ptrs[i]);
+  }
 }
 
 //=================================================================================================

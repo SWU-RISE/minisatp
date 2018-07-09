@@ -39,14 +39,14 @@ SOFTWARE.
 void clearClausify(void);
 
 int estimatedAdderCost(const Linear& c);
-void oddEvenSort(vec<Formula>& fs);
-void rippleAdder(const vec<Formula>& xs, const vec<Formula>& ys,
-                 vec<Formula>& out);
-void addPb(const vec<Formula>& ps, const vec<Int>& Cs_, vec<Formula>& out,
+void oddEvenSort(vector<Formula>& fs);
+void rippleAdder(const vector<Formula>& xs, const vector<Formula>& ys,
+                 vector<Formula>& out);
+void addPb(const vector<Formula>& ps, const vector<Int>& Cs_, vector<Formula>& out,
            int bits);
 
-void clausify(SimpSolver& s, const vec<Formula>& fs, vec<Lit>& out);
-void clausify(SimpSolver& s, const vec<Formula>& fs);
+void clausify(SimpSolver& s, const vector<Formula>& fs, vector<Lit>& out);
+void clausify(SimpSolver& s, const vector<Formula>& fs);
 
 //=================================================================================================
 #endif

@@ -38,6 +38,8 @@ constructor)
 
 #include "Hash_standard.h"
 #include "VecAlloc.h"
+#include<vector>
+using std::vector;
 
 //=================================================================================================
 // Map implementation:
@@ -50,7 +52,7 @@ class Map {
     Cell* next;
   };
 
-  VecAlloc<Cell> alloc;
+  // VecAlloc<Cell> alloc;
   Cell** table;
   int capacity;
   int nelems;
@@ -72,7 +74,7 @@ class Map {
   void init(int min_capacity) {
     capacity = getCapacity(min_capacity);
     nelems = 0;
-    table = xmalloc<Cell*>(capacity);
+    table = new Cell*[capacity];// xmalloc<Cell*>(capacity);
     for (int i = 0; i < capacity; i++) table[i] = NULL;
   }
 
@@ -80,18 +82,19 @@ class Map {
     for (int i = 0; i < capacity; i++) {
       for (Cell* p = table[i]; p != NULL;) {
         Cell* next = p->next;
-        p->key.~K();
-        p->datum.~D();
-        alloc.free(p);
+
+        delete p;
+
         p = next;
       }
     }
-    xfree(table);
+    delete[] table;
+
   }
 
   void rehash(int min_capacity) {
     int new_capacity = getCapacity(min_capacity);
-    Cell** new_table = xmalloc<Cell*>(new_capacity);
+    Cell** new_table =new Cell*[new_capacity] ;//xmalloc<Cell*>(new_capacity);
     for (int i = 0; i < new_capacity; i++) new_table[i] = NULL;
 
     for (int i = 0; i < capacity; i++) {
@@ -103,7 +106,8 @@ class Map {
         p = next;
       }
     }
-    xfree(table);
+    delete[] table;
+
     table = new_table;
     capacity = new_capacity;
   }
@@ -113,9 +117,9 @@ class Map {
       rehash(capacity * 2);
       i = index(key);
     }
-    Cell* p = alloc.alloc();
-    new (&p->key) K(key);
-    new (&p->datum) D(value);
+    Cell* p = new Cell(); //alloc.alloc();
+    p->key=key;
+    p->datum=value;
     p->next = table[i];
     table[i] = p;
     nelems++;
@@ -152,18 +156,18 @@ class Map {
   //---------------------------------------------------------------------------------------------
   // Export:
 
-  void domain(vec<K>& result) const {
+  void domain(vector<K>& result) const {
     for (int i = 0; i < capacity; i++)
-      for (Cell* p = table[i]; p != NULL; p = p->next) result.push(p->key);
+      for (Cell* p = table[i]; p != NULL; p = p->next) result.push_back(p->key);
   }
-  void range(vec<D>& result) const {
+  void range(vector<D>& result) const {
     for (int i = 0; i < capacity; i++)
-      for (Cell* p = table[i]; p != NULL; p = p->next) result.push(p->datum);
+      for (Cell* p = table[i]; p != NULL; p = p->next) result.push_back(p->datum);
   }
-  void pairs(vec<Pair<K, D> >& result) const {
+  void pairs(vector<Pair<K, D> >& result) const {
     for (int i = 0; i < capacity; i++)
       for (Cell* p = table[i]; p != NULL; p = p->next)
-        result.push(Pair_new(p->key, p->datum));
+        result.push_back(Pair_new(p->key, p->datum));
   }
 
 //---------------------------------------------------------------------------------------------
@@ -236,12 +240,12 @@ class Map {
     unsigned i = index(key);
     for (Cell** pp = &table[i]; *pp != NULL; pp = &(*pp)->next) {
       if (Par::equal((*pp)->key, key)) {
+        
         Cell* p = *pp;
         *pp = (*pp)->next;
         nelems--;
-        p->key.~K();
-        p->datum.~D();
-        alloc.free(p);
+        delete p;
+
         return true;
       }
     }

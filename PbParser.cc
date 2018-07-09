@@ -139,21 +139,21 @@ static Int parseInt(B& in) {
     return neg ? -val : val; }
 
 template<class B>
-static char* parseIdent(B& in, vec<char>& tmp) {   // 'tmp' is cleared, then filled with the parsed string. '(char*)tmp' is returned for convenience.
+static cchar* parseIdent(B& in, vector<char>& tmp) {   // 'tmp' is cleared, then filled with the parsed string. '(char*)tmp' is returned for convenience.
     skipWhitespace(in);
     if ((*in < 'a' || *in > 'z') && (*in < 'A' || *in > 'Z') && *in != '_') throw nsprintf("Expected start of identifier, not: %c", *in);
     tmp.clear();
-    tmp.push(*in);
+    tmp.push_back(*in);
     ++in;
     while ((*in >= 'a' && *in <= 'z') || (*in >= 'A' && *in <= 'Z') || (*in >= '0' && *in <= '9') || *in == '_')
-        tmp.push(*in),
+        tmp.push_back(*in),
         ++in;
-    tmp.push(0);
-    return (char*)tmp; }
+    tmp.push_back(0);
+    return &(tmp[0]); }
 
 
 template<class B, class S>
-void parseExpr(B& in, S& solver, vec<Lit>& out_ps, vec<Int>& out_Cs, vec<char>& tmp, bool old_format)
+void parseExpr(B& in, S& solver, vector<Lit>& out_ps, vector<Int>& out_Cs, vector<char>& tmp, bool old_format)
     // NOTE! only uses "getVar()" method of solver; doesn't add anything.
     // 'tmp' is a tempory, passed to avoid frequent memory reallocation.
 {
@@ -161,12 +161,12 @@ void parseExpr(B& in, S& solver, vec<Lit>& out_ps, vec<Int>& out_Cs, vec<char>& 
     for(;;){
         skipWhitespace(in);
         if ((*in < '0' || *in > '9') && *in != '+' && *in != '-') break;
-        out_Cs.push(parseInt(in));
+        out_Cs.push_back(parseInt(in));
         skipWhitespace(in);
         if (old_format){
             if (*in != '*') throw xstrdup("Missing '*' after coefficient.");
             ++in; }
-        out_ps.push(mkLit(solver.getVar(parseIdent(in, tmp))));
+        out_ps.push_back(mkLit(solver.getVar(parseIdent(in, tmp))));
         empty = false;
     }
     if (empty) throw xstrdup("Empty expression.");
@@ -183,11 +183,11 @@ void parseSize(B& in, S& solver)
     skipWhitespace(in);
 
     if (!skipText(in, "#variable=")) goto Abort;
-    n_vars = toint(parseInt(in));
+    n_vars = parseInt(in);
 
     skipWhitespace(in);
     if (!skipText(in, "#constraint=")) goto Abort;
-    n_constrs = toint(parseInt(in));
+    n_constrs = parseInt(in);
 
     solver.allocConstrs(n_vars, n_constrs);
 
@@ -202,7 +202,7 @@ void parseGoal(B& in, S& solver, bool old_format)
     skipWhitespace(in);
     if (!skipText(in, "min:")) return;      // No goal specified. If file is syntactically correct, no characters will have been consumed (expecting integer).
 
-    vec<Lit> ps; vec<Int> Cs; vec<char> tmp;
+    vector<Lit> ps; vector<Int> Cs; vector<char> tmp;
     skipWhitespace(in);
     if (*in == ';'){
         ++in;
@@ -244,7 +244,7 @@ int parseInequality(B& in)
 template<class B, class S>
 bool parseConstrs(B& in, S& solver, bool old_format)
 {
-    vec<Lit> ps; vec<Int> Cs; vec<char> tmp;
+    vector<Lit> ps; vector<Int> Cs; vector<char> tmp;
     int     ineq;
     Int     rhs;
     while (*in != EOF){
@@ -279,7 +279,7 @@ static bool parse_PB(B& in, S& solver, bool old_format, bool abort_on_error)
     }catch (cchar* msg){
         if (abort_on_error){
             reportf("PARSE ERROR! [line %d] %s\n", in.line, msg);
-            xfree(msg);
+            // xfree(msg);
             if (opt_satlive && !opt_try)
                 printf("s UNKNOWN\n");
             exit(5);
@@ -307,7 +307,7 @@ void parse_PB_file(cchar* filename, PbSolver& solver, bool old_format, bool abor
 
 struct DummySolver {
     Map<cchar*, int> name2index;
-    vec<cchar*>      index2name;
+    vector<cchar*>      index2name;
 
     int getVar(cchar* name) {
         int ret;
@@ -318,9 +318,9 @@ struct DummySolver {
 
     void alloc(int n_vars, int n_constrs) {
         printf("alloc(%d, %d)\n", n_vars, n_constrs); }
-    void addGoal(vec<Lit>& ps, vec<Int>& Cs) {
+    void addGoal(vector<Lit>& ps, vector<LONG>& Cs) {
         printf("MIN: "); dump(ps, Cs); printf("\n"); }
-    bool addConstr(vec<Lit>& ps, vec<Int>& Cs, Int rhs, int ineq) {
+    bool addConstr(vector<Lit>& ps, vector<LONG>& Cs, LONG rhs, int ineq) {
         static cchar* ineq_name[5] = { "<", "<=" ,"==", ">=", ">" };
         printf("CONSTR: "); dump(ps, Cs); printf(" %s ", ineq_name[ineq+2]); dump(rhs); printf("\n");
         return true; }

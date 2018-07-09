@@ -39,7 +39,7 @@ macro Formula operator || (Formula f, Formula g) {
 //- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-static inline void cmp2(vec<Formula>& fs, int begin)
+static inline void cmp2(vector<Formula>& fs, int begin)
 {
     Formula a     = fs[begin];
     Formula b     = fs[begin + 1];
@@ -52,34 +52,35 @@ static inline void cmp2(vec<Formula>& fs, int begin)
 #endif
 }
 
-static void riffle(vec<Formula>& fs)
+static void riffle(vector<Formula>& fs)
 {
-    vec<Formula> tmp; fs.copyTo(tmp);
+  vector<Formula> tmp(fs);
     for (int i = 0; i < fs.size() / 2; i++){
         fs[i*2]   = tmp[i];
         fs[i*2+1] = tmp[i+fs.size() / 2];
     }
 }
 
-static void unriffle(vec<Formula>& fs)
+static void unriffle(vector<Formula>& fs)
 {
-    vec<Formula> tmp; fs.copyTo(tmp);
+  vector<Formula> tmp(fs);
+    
     for (int i = 0; i < fs.size() / 2; i++){
         fs[i]               = tmp[i*2];
         fs[i+fs.size() / 2] = tmp[i*2+1];
     }
 }
 
-static void oddEvenMerge(vec<Formula>& fs, int begin, int end)
+static void oddEvenMerge(vector<Formula>& fs, int begin, int end)
 {
     assert(end - begin > 1);
     if (end - begin == 2)
         cmp2(fs,begin);
     else {
         int          mid = (end - begin) / 2;
-        vec<Formula> tmp;
+        vector<Formula> tmp;
         for (int i = 0; i < end - begin; i++)
-            tmp.push(fs[begin+i]);
+            tmp.push_back(fs[begin+i]);
         unriffle(tmp);
         oddEvenMerge(tmp,0,mid);
         oddEvenMerge(tmp,mid,tmp.size());
@@ -94,14 +95,15 @@ static void oddEvenMerge(vec<Formula>& fs, int begin, int end)
 // Inputs to the circuit is the formulas in fs, which is overwritten
 // by the resulting outputs of the circuit.
 // NOTE: The number of comparisons is bounded by: n * log n * (log n + 1)
-void oddEvenSort(vec<Formula>& fs)
+void oddEvenSort(vector<Formula>& fs)
 {
     int orig_sz = fs.size();
-    int sz; for (sz = 1; sz < fs.size(); sz *= 2);
-    fs.growTo(sz,_0_);
+    size_t sz; for (sz = 1; sz < fs.size(); sz *= 2);
+    fs.resize(sz,_0_);
+    // fs.growTo(sz,_0_);
 
     for (int i = 1; i < fs.size(); i *= 2)
         for (int j = 0; j + 2*i <= fs.size(); j += 2*i)
             oddEvenMerge(fs,j,j+2*i);
-    fs.shrink(sz - orig_sz);
+    fs.resize(sz - orig_sz);
 }
